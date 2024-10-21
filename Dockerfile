@@ -1,7 +1,7 @@
 FROM node:23 AS frontend
 WORKDIR /app
 COPY frontend/ .
-RUN npm run build
+RUN npm i --also=dev && npm run build
 
 FROM golang:1.23 AS backend
 WORKDIR /app
@@ -17,6 +17,7 @@ COPY --from=frontend  /app/dist/ .
 COPY frontend/favicon.ico .
 WORKDIR /
 COPY --from=backend /requestcatcher .
+ENV HOST=0.0.0.0
 ENV FRONTEND_DIR=/frontend/
 ENV FAVICON=/frontend/favicon.ico
 ENTRYPOINT ["/requestcatcher"]

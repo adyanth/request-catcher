@@ -42,8 +42,8 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	err = server.ListenAndServe()
-	if err != nil {
+	fmt.Printf("listening on %v\n", httpPort)
+	if server.ListenAndServe() != nil {
 		fatalf("error listening on %s: %s\n", httpPort, err)
 	}
 }

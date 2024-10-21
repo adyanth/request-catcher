@@ -24,3 +24,5 @@ _testmain.go
 *.prof
 
 request-catcher
+**/node_modules/
+**/.parcel-cache/
