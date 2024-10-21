@@ -30,7 +30,9 @@ func main() {
 	tlsconf := &tls.Config{MinVersion: tls.VersionTLS10}
 
 	// Start a http server to redirect http traffic to https
+	httpHost := config.Host + ":" + strconv.Itoa(config.HTTPPort)
 	srv := &http.Server{
+		Addr:         httpHost,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
 		IdleTimeout:  30 * time.Second,
@@ -40,15 +42,15 @@ func main() {
 
 			w.Header().Set("Connection", "close")
 			url := "https://" + req.Host + req.URL.String()
-			http.Redirect(w, req, url, http.StatusMovedPermanently)
+			http.Redirect(w, req, url, http.StatusTemporaryRedirect)
 		}),
 	}
 	go func() { log.Fatal(srv.ListenAndServe()) }()
 
 	// Start the HTTPS server.
-	fullHost := config.Host + ":" + strconv.Itoa(config.HTTPSPort)
+	httpsPort := config.Host + ":" + strconv.Itoa(config.HTTPSPort)
 	server := http.Server{
-		Addr:         fullHost,
+		Addr:         httpsPort,
 		Handler:      withPProfHandler(catcher),
 		TLSConfig:    tlsconf,
 		ReadTimeout:  5 * time.Second,
@@ -71,7 +73,7 @@ func main() {
 		err = server.ListenAndServe()
 	}
 	if err != nil {
-		fatalf("error listening on %s: %s\n", fullHost, err)
+		fatalf("error listening on %s: %s\n", httpsPort, err)
 	}
 }
 
