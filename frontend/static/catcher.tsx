@@ -72,6 +72,7 @@ $(document).ready(function() {
   window.catcher.requests = $('#requests');
   window.catcher.selector = $('#selector');
   window.catcher.noRequests = $('#no-requests');
+  $('#protocol').text(window.location.protocol);
   $('#hostname').text(window.location.host);
 
   window.catcher.connect();
