@@ -2,6 +2,9 @@
   "name": "static",
   "version": "1.0.0",
   "license": "MIT",
+  "scripts": {
+    "build": "parcel build root.html --public-url=./assets/ && parcel build index.html --public-url=./assets/ "
+  },
   "devDependencies": {
     "cssnano": "^5.1.14",
     "parcel": "^2.12.0",

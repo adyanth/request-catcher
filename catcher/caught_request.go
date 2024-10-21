@@ -2,7 +2,7 @@ package catcher
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -42,7 +42,7 @@ func convertRequest(req *http.Request) *CaughtRequest {
 }
 
 func (req *CaughtRequest) MarshalJSON() ([]byte, error) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		return nil, err
 	}

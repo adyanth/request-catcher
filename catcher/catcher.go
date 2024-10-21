@@ -120,7 +120,7 @@ func (c *Catcher) catchRequests(w http.ResponseWriter, r *http.Request) {
 
 func (c *Catcher) initClient(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 	c.stats.requestsClientInit.Add(1)
