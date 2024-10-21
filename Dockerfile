@@ -11,7 +11,7 @@ COPY catcher catcher
 COPY main.go .
 RUN CGO_ENABLED=0 go build -o /requestcatcher main.go
 
-FROM gcr.io/distroless/base-debian12 AS requestcatcher
+FROM gcr.io/distroless/static-debian12 AS requestcatcher
 WORKDIR /frontend
 COPY --from=frontend  /app/dist/ .
 COPY frontend/favicon.ico .
