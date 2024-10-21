@@ -2,14 +2,11 @@ package main
 
 import (
 	"crypto/subtle"
-	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/pprof"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -18,62 +15,36 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fatalf("Usage: request-catcher <config-filename>\n")
+	if len(os.Args) > 2 {
+
 	}
-	config, err := catcher.LoadConfiguration(os.Args[1])
+	filename := catcher.Getenv("CONFIG_FILE", "")
+	if len(os.Args) == 2 {
+		if os.Args[1] == "-h" || os.Args[1] == "--help" {
+			fmt.Println("Usage: request-catcher <config-filename>")
+			return
+		}
+		filename = os.Args[1]
+	}
+	config, err := catcher.LoadConfiguration(filename)
 	if err != nil {
 		fatalf("error loading configuration file: %s\n", err)
 	}
 	catcher := catcher.NewCatcher(config)
 
-	tlsconf := &tls.Config{MinVersion: tls.VersionTLS10}
-
-	// Start a http server to redirect http traffic to https
-	httpHost := config.Host + ":" + strconv.Itoa(config.HTTPPort)
-	srv := &http.Server{
-		Addr:         httpHost,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
-		IdleTimeout:  30 * time.Second,
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			// Catch HTTP requests too, even if we are redirecting them.
-			catcher.Catch(req)
-
-			w.Header().Set("Connection", "close")
-			url := "https://" + req.Host + req.URL.String()
-			http.Redirect(w, req, url, http.StatusTemporaryRedirect)
-		}),
-	}
-	go func() { log.Fatal(srv.ListenAndServe()) }()
-
-	// Start the HTTPS server.
-	httpsPort := config.Host + ":" + strconv.Itoa(config.HTTPSPort)
+	// Start the HTTP server.
+	httpPort := config.Host + ":" + strconv.Itoa(config.HTTPPort)
 	server := http.Server{
-		Addr:         httpsPort,
+		Addr:         httpPort,
 		Handler:      withPProfHandler(catcher),
-		TLSConfig:    tlsconf,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
-		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
 	}
-	// TODO: use GetCertificate instead and periodically reload
-	// the tls keypair from disk. as written, certificate renewals
-	// require a process restart.
-	// NOTE: can't use autocert because we need to use DNS challenges
-	// to acquire wildcard certificates.
 
-	if config.TLSDir != "" {
-		err = server.ListenAndServeTLS(
-			filepath.Join(config.TLSDir, "fullchain.pem"),
-			filepath.Join(config.TLSDir, "privkey.pem"),
-		)
-	} else {
-		err = server.ListenAndServe()
-	}
+	err = server.ListenAndServe()
 	if err != nil {
-		fatalf("error listening on %s: %s\n", httpsPort, err)
+		fatalf("error listening on %s: %s\n", httpPort, err)
 	}
 }
 

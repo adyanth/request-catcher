@@ -48,9 +48,9 @@ func NewCatcher(config *Configuration) *Catcher {
 	c.router.HandleFunc("/", c.indexHandler)
 	c.router.HandleFunc("/init-client", c.initClient)
 	c.router.PathPrefix("/assets").Handler(http.StripPrefix("/assets",
-		withCacheHeaders(http.FileServer(http.Dir("frontend/dist")))))
+		withCacheHeaders(http.FileServer(http.Dir(config.FrontendDir)))))
 	c.router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "frontend/favicon.ico")
+		http.ServeFile(w, r, config.Favicon)
 	})
 	c.router.HandleFunc("/statusz", c.status)
 	c.router.NotFoundHandler = http.HandlerFunc(c.catchRequests)
@@ -69,8 +69,8 @@ func withCacheHeaders(h http.Handler) http.Handler {
 func (c *Catcher) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if strings.HasPrefix(req.Host, "www.") {
 		rw.Header().Set("Connection", "close")
-		url := "https://" + strings.TrimPrefix(req.Host, "www.") + req.URL.String()
-		http.Redirect(rw, req, url, http.StatusMovedPermanently)
+		url := strings.TrimPrefix(req.Host, "www.") + req.URL.String()
+		http.Redirect(rw, req, url, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (c *Catcher) host(hostString string) *Host {
 }
 
 func (c *Catcher) rootHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "frontend/dist/root.html")
+	http.ServeFile(w, r, c.config.FrontendDir+"/root.html")
 }
 
 func (c *Catcher) indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +100,7 @@ func (c *Catcher) indexHandler(w http.ResponseWriter, r *http.Request) {
 	// the index to be hosted at requestcatcher.com.
 	c.Catch(r)
 	c.stats.requestsIndex.Add(1)
-	http.ServeFile(w, r, "frontend/dist/index.html")
+	http.ServeFile(w, r, c.config.FrontendDir+"/index.html")
 }
 
 func (c *Catcher) catchRequests(w http.ResponseWriter, r *http.Request) {
